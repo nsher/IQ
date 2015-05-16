@@ -1,33 +1,49 @@
 #!/usr/bin/python
-import random, sys, math, re, datetime
+import random, sys, math, re, datetime, os
 
 
-def iq(level, user_name): # весь тест
+def iq(file_name, is_last_session): # весь тест
+    if is_last_session is False:
+        modes = ['easy', 'difficult', 'hard', 'extreme']
+        if len(sys.argv) == 2: # если программа запущена из командной строки и ей передан аргумент - имя уровня
+            level = sys.argv[1]
+        else: # запрос уровня у пользователя (до тех пор, пока не укажет корректно)
+            print('easy or difficult, hard, extreme')
+            level = input()
+            while level not in modes:
+                print('type correct mode name!')
+                level = input()
+    else:
+        level = open(file_name, 'r', encoding='utf8').readline().strip()
+        print(level)
     max_result = 0
     result = 0
-    d = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M')
-    file_name = 'test_sessions/' + user_name + "_" + d + ".ts"
-    file_results = open(file_name, 'w', encoding='utf8')
     file_questions = open(level + ".iq", "r", encoding="utf8")
     print('test run in ' + level + ' mode')
-    file_results.write(level + '\n')
-    file_results.close()
-    for line in file_questions:
-        current_result = question(line, file_name)
-        result += current_result
-        max_result += 5
-    file_questions.close()
-    percent = math.ceil(result / max_result * 100)
-    message = '| Test is finished. Your result is ' + str(result)
-    message += ' out of ' + str(max_result) + ' (' + str(percent) + '%) |'
-    to_results = ' ' + '-' * (len(message) - 2) + '\n'
-    to_results += message + '\n'
-    to_results += ' ' + '-' * (len(message) - 2) + '\n'
-    to_results += get_message(percent) + '\n'
-    print(to_results)
     file_results = open(file_name, 'a', encoding='utf8')
-    file_results.write(to_results)
-    file_results.close()
+    try:
+        file_results.write(level + '\n')
+        file_results.close()
+        for line in file_questions:
+            current_result = question(line, file_name)
+            result += current_result
+            max_result += 5
+        file_questions.close()
+        percent = math.ceil(result / max_result * 100)
+        message = '| Test is finished. Your result is ' + str(result)
+        message += ' out of ' + str(max_result) + ' (' + str(percent) + '%) |'
+        to_results = ' ' + '-' * (len(message) - 2) + '\n'
+        to_results += message + '\n'
+        to_results += ' ' + '-' * (len(message) - 2) + '\n'
+        to_results += get_message(percent) + '\n'
+        print(to_results)
+        file_results = open(file_name, 'a', encoding='utf8')
+        file_results.write(to_results)
+    except KeyboardInterrupt:
+        print('test is stopped')
+    finally:
+        file_results.close()
+
 
 
 def question(src, fname): # вывод и обработка ответа по вопросу, src - строка из файла с вопросами
@@ -117,18 +133,27 @@ def computeExpression(x, y): # генерация арифметического
         return x % y, operators[randOp]
 
 
+def get_last_unclosed_results(user_name): # поиск имени файла с незавершенным сеансом тестирования для заданного в аргументе пользователя
+    path = './test_sessions/'
+    last_file_name = ''
+    for name in os.listdir(path):
+        if name.split('_')[0] == user_name and name[-3:] == '.ts':
+            f = open(path + name, 'r', encoding='utf8')
+            if 'Test is finished.' not in f.read():
+                last_file_name = path + name
+            f.close()
+    return last_file_name
+
+
 def main(): # основная функция программы
     user_name = input('Enter your name: ')
-    modes = ['easy', 'difficult', 'hard', 'extreme']
-    if len(sys.argv) == 2: # если программа запущена из командной строки и ей передан аргумент - имя уровня
-        mode = sys.argv[1]
-    else: # запрос уровня у пользователя (до тех пор, пока не укажет корректно)
-        print('easy or difficult, hard, extreme')
-        mode = input()
-        while mode not in modes:
-            print('type correct mode name!')
-            mode = input()
-    iq(mode, user_name)
+    file_name_last_session = get_last_unclosed_results(user_name)
+    if file_name_last_session != '' and input('Do you want continue last session? (y/n) ') == 'y':
+        iq(file_name_last_session, True)
+    else:
+        d = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M')
+        file_name_new_session = 'test_sessions/' + user_name + "_" + d + ".ts"
+        iq(file_name_new_session, False)
 
 
 if __name__ == "__main__":
