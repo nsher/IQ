@@ -3,6 +3,9 @@ import random, sys, math, re, datetime, os
 
 
 def iq(file_name, is_last_session): # весь тест
+    how_much_to_skip = 0
+    max_result = 0
+    result = 0
     if is_last_session is False:
         modes = ['easy', 'difficult', 'hard', 'extreme']
         if len(sys.argv) == 2: # если программа запущена из командной строки и ей передан аргумент - имя уровня
@@ -14,16 +17,23 @@ def iq(file_name, is_last_session): # весь тест
                 print('type correct mode name!')
                 level = input()
     else:
-        level = open(file_name, 'r', encoding='utf8').readline().strip()
-        print(level)
-    max_result = 0
-    result = 0
+        file_last_results = open(file_name, 'r', encoding='utf8')
+        level = file_last_results.readline().strip()
+        for line in file_last_results:
+            if line[:7] == 'you got':
+                how_much_to_skip += 1
+                max_result += 5
+                result += int(line[8])
+        file_last_results.close()
     file_questions = open(level + ".iq", "r", encoding="utf8")
     print('test run in ' + level + ' mode')
     file_results = open(file_name, 'a', encoding='utf8')
     try:
-        file_results.write(level + '\n')
+        if how_much_to_skip == 0:
+            file_results.write(level + '\n')
         file_results.close()
+        for skip_line in range(how_much_to_skip):
+            file_questions.readline()
         for line in file_questions:
             current_result = question(line, file_name)
             result += current_result
