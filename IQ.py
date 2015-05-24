@@ -25,7 +25,7 @@ def iq(file_name, is_last_session): # весь тест
                 max_result += 5
                 result += int(line[8])
         file_last_results.close()
-    file_questions = open(level + ".iq", "r", encoding="utf8")
+    file_questions = open('levels/' + level + '.iq', 'r', encoding='utf8')
     print('test run in ' + level + ' mode')
     file_results = open(file_name, 'a', encoding='utf8')
     try:
