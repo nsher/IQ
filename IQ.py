@@ -155,15 +155,38 @@ def get_last_unclosed_results(user_name): # поиск имени файла с 
     return last_file_name
 
 
+def create_new_session(user_name):
+    d = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M')
+    file_name_new_session = 'test_sessions/' + user_name + "_" + d + ".ts"
+    iq(file_name_new_session, False)
+
+
+def create_user():
+    user_name = input('Create your name: ')
+    user_password = input('Create a password: ')
+    file_users = open('users.csv', 'r', encoding='utf8')
+    last_id = int(file_users.readlines()[-1].split(';')[0])
+    file_users.close()
+    file_users = open('users.csv', 'a', encoding='utf8')
+    file_users.write(str(last_id + 1) + ';' + user_name + ';' + user_password + ';n\n')
+    file_users.close()
+    return user_name
+
+
 def main(): # основная функция программы
-    user_name = input('Enter your name: ')
-    file_name_last_session = get_last_unclosed_results(user_name)
-    if file_name_last_session != '' and input('Do you want continue last session? (y/n) ') == 'y':
-        iq(file_name_last_session, True)
+    answer = input('Sign in (i) or sign up (u)?')
+    if answer == 'u':
+        user_name = create_user()
+        create_new_session(user_name)
+    elif answer == 'i':
+        user_name = 'test' # TODO insert function authorization()
+        file_name_last_session = get_last_unclosed_results(user_name)
+        if file_name_last_session != '' and input('Do you want continue last session? (y/n) ') == 'y':
+            iq(file_name_last_session, True)
+        else:
+            create_new_session(user_name)
     else:
-        d = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M')
-        file_name_new_session = 'test_sessions/' + user_name + "_" + d + ".ts"
-        iq(file_name_new_session, False)
+        main()
 
 
 if __name__ == "__main__":
